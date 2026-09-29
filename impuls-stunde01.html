@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bildimpuls Stunde 1 – Wie schnell bist du eigentlich? · Physik EF.1</title>
+<style>
+:root{--ink:#1c2733;--muted:#5b6b7b;--accent:#1565c0;--bg:#eef2f6;--card:#fff;--line:#dbe3ea;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     background:var(--bg);color:var(--ink);line-height:1.5;padding:1.6rem 1.2rem 3rem}
+.wrap{max-width:1500px;margin:0 auto}
+header.top{background:linear-gradient(135deg,#0d3b66 0%,#1565c0 100%);color:#fff;border-radius:14px;
+     padding:1.5rem 1.8rem;margin-bottom:1.3rem;box-shadow:0 2px 10px rgba(13,59,102,.25)}
+header.top .kicker{font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+header.top h1{font-size:2.1rem;line-height:1.2;margin-top:.4rem}
+header.top p{margin-top:.5rem;opacity:.92;font-size:1.02rem}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+figure{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+     box-shadow:0 1px 3px rgba(28,39,51,.05);display:flex;flex-direction:column}
+.ph{position:relative;background:#0d1b26;aspect-ratio:4/3;overflow:hidden;cursor:zoom-in}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .nr{position:absolute;top:.6rem;left:.6rem;background:var(--accent);color:#fff;font-weight:800;
+     width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;font-size:1rem}
+figcaption{padding:.9rem 1.1rem 1.1rem}
+figcaption .t{font-weight:700;font-size:1.06rem}
+figcaption .q{color:var(--accent);font-weight:700;margin-top:.45rem;font-size:1rem}
+figcaption .m{color:var(--muted);font-size:.86rem;margin-top:.5rem}
+
+.video{margin-top:1.1rem;background:var(--card);border:1px solid var(--line);border-radius:12px;
+     padding:1.2rem 1.4rem;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.video .txt{flex:1 1 320px}
+.video h2{font-size:1.06rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.video p{margin-top:.35rem;color:var(--muted)}
+a.btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;
+     padding:.75rem 1.3rem;border-radius:10px;font-size:1.02rem;white-space:nowrap}
+a.btn:hover{background:#0d3b66}
+a.btn.zweit{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+
+.leit{margin-top:1.1rem;background:#fff8e6;border:1px solid #f0d98c;border-radius:12px;padding:1.1rem 1.4rem}
+.leit h2{font-size:1.06rem;text-transform:uppercase;letter-spacing:.05em;color:#9a6a00;margin-bottom:.5rem}
+.leit ul{padding-left:1.2rem}
+.leit li{margin:.3rem 0}
+
+footer{margin-top:1.6rem;color:var(--muted);font-size:.8rem}
+footer a{color:var(--muted)}
+footer .titel{font-weight:700;color:var(--ink);margin-bottom:.3rem;font-size:.86rem}
+
+/* Vollbild beim Klick */
+#lupe{position:fixed;inset:0;background:rgba(8,16,24,.94);display:none;place-items:center;z-index:50;
+     cursor:zoom-out;padding:1.5rem}
+#lupe.an{display:grid}
+#lupe img{max-width:100%;max-height:88vh;object-fit:contain;border-radius:8px}
+#lupe .bu{position:absolute;bottom:1.1rem;left:0;right:0;text-align:center;color:#fff;font-size:1.15rem;
+     font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+@media print{body{background:#fff}.video,#lupe{display:none}}
+</style>
+</head>
+<body><div class="wrap">
+
+<header class="top">
+  <div class="kicker">Physik EF.1 · Reihe 1 „Bewegungen vermessen“ · Stunde 1 · Einstieg, 10 min</div>
+  <h1>Wie schnell bist du eigentlich – und woher will man das wissen?</h1>
+  <p>Drei Bilder, eine Frage. Klick auf ein Bild zeigt es groß. Taste 1, 2 oder 3 tut dasselbe, Escape schließt.</p>
+</header>
+
+<div class="grid">
+  <figure>
+    <div class="ph" data-bu="Blitzersäule am Straßenrand – misst in einem einzigen Punkt">
+      <span class="nr">1</span>
+      <img src="bilder/blitzer-saeule.jpg" alt="Blitzersäule am Straßenrand">
+    </div>
+    <figcaption>
+      <div class="t">Die Blitzersäule</div>
+      <div class="q">Was misst das Gerät da eigentlich – und wie?</div>
+      <div class="m">Steht fest an einer Stelle. Misst genau dort, im Vorbeifahren.</div>
+    </figcaption>
+  </figure>
+
+  <figure>
+    <div class="ph" data-bu="Polizei mit Laser-Messgerät – gleiche Frage, anderes Verfahren">
+      <span class="nr">2</span>
+      <img src="bilder/laserpistole.jpg" alt="Polizisten bei einer Geschwindigkeitsmessung mit Laser-Messgerät">
+    </div>
+    <figcaption>
+      <div class="t">Die Laserpistole</div>
+      <div class="q">Warum braucht man dafür ein Stativ?</div>
+      <div class="m">Wird von Hand auf ein Auto gerichtet. Gleiche Aufgabe, ganz andere Technik.</div>
+    </figcaption>
+  </figure>
+
+  <figure>
+    <div class="ph" data-bu="100-m-Finale – hier wird die Zeit gemessen, nicht das Tempo">
+      <span class="nr">3</span>
+      <img src="bilder/100m-finale.jpg" alt="Usain Bolt im 100-Meter-Finale">
+    </div>
+    <figcaption>
+      <div class="t">Das 100-m-Finale</div>
+      <div class="q">Hier steht keine Geschwindigkeit auf der Anzeigetafel. Warum nicht?</div>
+      <div class="m">Gemessen wird die Zeit für eine feste Strecke. Das Tempo rechnet man erst daraus aus.</div>
+    </figcaption>
+  </figure>
+</div>
+
+<div class="video">
+  <div class="txt">
+    <h2>Und zum Mitfiebern</h2>
+    <p>Der Weltrekord über 100 m: Usain Bolt, Berlin 2009, <strong>9,58 s</strong>. Das sind im Schnitt
+       10,44 m/s oder 37,6 km/h. Sein schnellster Abschnitt lag bei über 44 km/h.</p>
+  </div>
+  <a class="btn" href="https://www.youtube.com/watch?v=3nbjhpcZ9_g" target="_blank" rel="noopener">Video öffnen · 9,58 s</a>
+  <a class="btn zweit" href="https://de.wikipedia.org/wiki/Geschwindigkeits%C3%BCberwachung" target="_blank" rel="noopener">Mehr Blitzer-Bauarten</a>
+</div>
+
+<div class="leit">
+  <h2>Wenn die Klasse zu schnell fertig ist</h2>
+  <ul>
+    <li>Alle drei messen Geschwindigkeit. <strong>Keines misst sie direkt.</strong> Gemessen werden immer Strecke und Zeit.</li>
+    <li>Bild 1 und 2 messen in einem Punkt, Bild 3 über eine ganze Strecke. Das ist schon der Unterschied aus Stunde 6.</li>
+    <li>Frage zum Weiterdenken: Welche Geräte hättest du, um <em>deine eigene</em> Bewegung zu vermessen? Das ist die Überleitung zur Placemat.</li>
+  </ul>
+</div>
+
+<footer>
+  <div class="titel">Bildnachweis – alle Bilder frei lizenziert, Wiedergabe mit Namensnennung</div>
+  1 Blitzersäule: Fabian Horst, CC BY 4.0, via
+  <a href="https://commons.wikimedia.org/wiki/File:2021-01-13_-_PoliScan_Speed_S%C3%A4ule.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> ·
+  2 Lasermessung: VisualBeo, CC BY-SA 3.0, via
+  <a href="https://commons.wikimedia.org/wiki/File:Polizei_laser_messung.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> ·
+  3 Usain Bolt, 100-m-Finale Rio 2016: Fernando Frazão / Agência Brasil, CC BY 3.0 BR, via
+  <a href="https://commons.wikimedia.org/wiki/File:Usain_Bolt_Rio_100m_final_2016k.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>.
+  Das Video liegt bei YouTube und wird nur verlinkt, nicht kopiert.
+</footer>
+
+</div>
+
+<div id="lupe"><img alt=""><div class="bu"></div></div>
+
+<script>
+(function(){
+  const lupe = document.getElementById('lupe');
+  const gross = lupe.querySelector('img');
+  const bu = lupe.querySelector('.bu');
+  const felder = [...document.querySelectorAll('.ph')];
+
+  function zeigen(i){
+    const f = felder[i]; if(!f) return;
+    gross.src = f.querySelector('img').src;
+    gross.alt = f.querySelector('img').alt;
+    bu.textContent = f.dataset.bu || '';
+    lupe.classList.add('an');
+  }
+  function zu(){ lupe.classList.remove('an'); gross.src = ''; }
+
+  felder.forEach((f,i)=> f.addEventListener('click', ()=> zeigen(i)));
+  lupe.addEventListener('click', zu);
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape') return zu();
+    const n = parseInt(e.key, 10);
+    if(n >= 1 && n <= felder.length) zeigen(n-1);
+  });
+})();
+</script>
+</body>
+</html>

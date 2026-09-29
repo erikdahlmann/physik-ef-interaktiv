@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anhalteweg – Tempo 30 oder Tempo 50?</title>
+<style>
+:root{
+  --ink:#1c2733;--muted:#5b6b7b;--accent:#1565c0;--bg:#eef2f6;--card:#fff;--line:#dbe3ea;
+  --gruen:#2e7d32;--orange:#e2653f;--blau:#3f6fae;--warn:#9a6a00;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.55;padding:2rem 1rem 4rem}
+.wrap{max-width:980px;margin:0 auto}
+header.top{background:linear-gradient(135deg,#0d3b66,#1565c0);color:#fff;border-radius:14px;
+  padding:1.4rem 1.8rem;margin-bottom:1.1rem}
+header.top .kicker{font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+header.top h1{font-size:1.55rem;margin-top:.2rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.4rem;
+  margin-bottom:1rem;box-shadow:0 1px 3px rgba(28,39,51,.05)}
+.card h2{font-size:.95rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:.7rem}
+video{width:100%;height:auto;display:block;border-radius:10px;background:#fbfaf7}
+.vhint{margin-top:.7rem;font-size:.95rem;color:var(--muted)}
+canvas{width:100%;height:auto;display:block;background:#fbfaf7;border-radius:10px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:.7rem 1.6rem;align-items:center;margin-top:1rem}
+.controls label{font-weight:600;font-size:.95rem}
+.controls input[type=range]{width:100%}
+.val{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700}
+.readout{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.9rem}
+.chip{border:1px solid var(--line);background:#f8fafc;border-radius:10px;padding:.45rem .85rem;
+  font-variant-numeric:tabular-nums;font-size:1.02rem}
+.chip b{display:block;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.chip.blau{border-color:var(--blau);color:var(--blau)}
+.chip.orange{border-color:var(--orange);color:var(--orange)}
+.verdict{margin-top:.9rem;border-radius:10px;padding:.8rem 1rem;font-weight:600}
+.verdict.ok{background:#e9f5ea;border:1px solid #b7dcb9;color:var(--gruen)}
+.verdict.bad{background:#fbeaea;border:1px solid #eec3c3;color:#c62828}
+ol{padding-left:1.3rem}li{margin:.4rem 0}
+.formel{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:.55rem .9rem;
+  display:inline-block;font-size:1.02rem;margin-top:.4rem}
+footer{margin-top:1.2rem;color:var(--muted);font-size:.85rem;text-align:center}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<header class="top">
+  <div class="kicker">Physik EF.1 · Kinematik · Stunde 12</div>
+  <h1>Anhalteweg: Tempo 30 oder Tempo 50?</h1>
+</header>
+
+<div class="card">
+  <h2>Zuerst ansehen</h2>
+  <video controls preload="metadata" poster="video/anhalteweg-still.jpg">
+    <source src="video/anhalteweg.mp4" type="video/mp4">
+    Dein Browser kann dieses Video nicht abspielen. Die Datei liegt unter <code>video/anhalteweg.mp4</code>.
+  </video>
+  <p class="vhint">Beide Autos bremsen gleich stark, beide Fahrer reagieren gleich schnell.
+  Achte darauf, wo der blaue Balken (Reaktionsweg) endet und der farbige (Bremsweg) beginnt.</p>
+</div>
+
+<div class="card">
+  <h2>Jetzt selbst ausprobieren</h2>
+  <canvas id="cv" width="920" height="330"></canvas>
+  <div class="controls">
+    <label for="v">Geschwindigkeit: <span class="val" id="vval"></span></label>
+    <input type="range" id="v" min="10" max="100" step="5" value="50">
+    <label for="tr">Reaktionszeit: <span class="val" id="trval"></span></label>
+    <input type="range" id="tr" min="0.4" max="2.0" step="0.1" value="1.0">
+    <label for="a">Bremsverzögerung: <span class="val" id="aval"></span></label>
+    <input type="range" id="a" min="3" max="10" step="0.5" value="7.5">
+    <label for="d">Abstand zum Hindernis: <span class="val" id="dval"></span></label>
+    <input type="range" id="d" min="5" max="60" step="1" value="25">
+  </div>
+  <div class="readout">
+    <div class="chip blau"><b>Reaktionsweg</b><span id="rw"></span></div>
+    <div class="chip orange"><b>Bremsweg</b><span id="bw"></span></div>
+    <div class="chip"><b>Anhalteweg</b><span id="aw"></span></div>
+  </div>
+  <div class="verdict" id="verdict"></div>
+</div>
+
+<div class="card">
+  <h2>Die beiden Formeln</h2>
+  <p><span class="formel">Reaktionsweg = v · t<sub>R</sub></span> &nbsp;
+     <span class="formel">Bremsweg = v² / (2 · a)</span></p>
+  <p style="margin-top:.7rem">Der Reaktionsweg wächst <strong>proportional</strong> zur Geschwindigkeit,
+  der Bremsweg <strong>quadratisch</strong>. Deshalb wird der Unterschied bei hohem Tempo so groß.</p>
+</div>
+
+<div class="card">
+  <h2>Aufgaben</h2>
+  <ol>
+    <li>Stelle 30 km/h ein, dann 60 km/h. Wie ändern sich Reaktionsweg und Bremsweg jeweils? Erkläre den Unterschied mit den beiden Formeln.</li>
+    <li>Ein Hindernis liegt 25 m entfernt. Finde die höchste Geschwindigkeit, bei der du gerade noch rechtzeitig stehst.</li>
+    <li>Setze die Reaktionszeit von 1,0 s auf 1,8 s (Ablenkung durchs Handy). Um wie viele Meter verlängert sich der Anhalteweg bei 50 km/h?</li>
+    <li>Regennasse Straße: Stelle die Bremsverzögerung von 7,5 auf 4,0 m/s². Welche der beiden Teilstrecken ändert sich, welche nicht? Warum?</li>
+    <li>Vergleiche dein Ergebnis aus Aufgabe 2 mit dem Video. Passt es zusammen?</li>
+  </ol>
+</div>
+
+<footer>Physik EF.1 · interaktives Arbeitsmaterial · offline lauffähig</footer>
+</div>
+<script>
+"use strict";
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height;
+const fmt = (x, d = 1) => x.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+const el = (id) => document.getElementById(id);
+
+function werte() {
+  const kmh = +el("v").value;
+  const tr = +el("tr").value;
+  const a = +el("a").value;
+  const d = +el("d").value;
+  const v = kmh / 3.6;
+  const rw = v * tr;
+  const bw = (v * v) / (2 * a);
+  return { kmh, tr, a, d, v, rw, bw, aw: rw + bw };
+}
+
+function zeichne() {
+  const { kmh, tr, a, d, v, rw, bw, aw } = werte();
+  const maxM = Math.max(aw, d) * 1.12 + 4;
+  const PAD = { l: 46, r: 30, t: 96, b: 58 };
+  const X = (m) => PAD.l + (m / maxM) * (W - PAD.l - PAD.r);
+  const spurY = 176;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#fbfaf7"; ctx.fillRect(0, 0, W, H);
+
+  // Meterskala
+  const schritt = maxM > 80 ? 20 : maxM > 40 ? 10 : 5;
+  ctx.font = "13px -apple-system,Segoe UI,Arial"; ctx.textAlign = "center";
+  for (let m = 0; m <= maxM; m += schritt) {
+    ctx.strokeStyle = "#e8e5dd"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X(m), PAD.t - 20); ctx.lineTo(X(m), H - PAD.b); ctx.stroke();
+    ctx.fillStyle = "#6b6b76"; ctx.fillText(m + " m", X(m), H - PAD.b + 22);
+  }
+  // Fahrbahn
+  ctx.strokeStyle = "#2b2b33"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(X(0), H - PAD.b); ctx.lineTo(W - PAD.r, H - PAD.b); ctx.stroke();
+
+  // Balken: Reaktionsweg + Bremsweg
+  const balkenY = spurY + 40;
+  ctx.lineCap = "round"; ctx.lineWidth = 15;
+  ctx.strokeStyle = "#3f6fae";
+  ctx.beginPath(); ctx.moveTo(X(0), balkenY); ctx.lineTo(X(rw), balkenY); ctx.stroke();
+  ctx.strokeStyle = "#e2653f";
+  ctx.beginPath(); ctx.moveTo(X(rw), balkenY); ctx.lineTo(X(aw), balkenY); ctx.stroke();
+  ctx.lineWidth = 1;
+
+  ctx.font = "bold 14px -apple-system,Segoe UI,Arial";
+  if (X(rw) - X(0) > 74) {
+    ctx.fillStyle = "#3f6fae"; ctx.fillText("Reaktion", (X(0) + X(rw)) / 2, balkenY - 16);
+  }
+  if (X(aw) - X(rw) > 74) {
+    ctx.fillStyle = "#e2653f"; ctx.fillText("Bremsen", (X(rw) + X(aw)) / 2, balkenY - 16);
+  }
+
+  // Hindernis
+  ctx.strokeStyle = "#2b2b33"; ctx.lineWidth = 2; ctx.setLineDash([7, 6]);
+  ctx.beginPath(); ctx.moveTo(X(d), PAD.t - 20); ctx.lineTo(X(d), H - PAD.b); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#2b2b33";
+  ctx.beginPath(); ctx.arc(X(d), H - PAD.b - 34, 11, 0, 2 * Math.PI); ctx.fill();
+  ctx.fillRect(X(d) - 8, H - PAD.b - 24, 16, 24);
+  ctx.font = "bold 14px -apple-system,Segoe UI,Arial";
+  ctx.fillText("Hindernis", X(d), PAD.t - 30);
+
+  // Auto an der Halteposition
+  const ax = X(aw), reicht = aw <= d;
+  const farbe = reicht ? "#2e7d32" : "#c62828";
+  ctx.fillStyle = farbe;
+  ctx.beginPath(); ctx.roundRect(ax - 40, spurY - 26, 80, 28, 8); ctx.fill();
+  ctx.globalAlpha = .85;
+  ctx.beginPath(); ctx.roundRect(ax - 22, spurY - 42, 44, 18, 6); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#2b2b33";
+  ctx.beginPath(); ctx.arc(ax - 22, spurY + 2, 8, 0, 2 * Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.arc(ax + 22, spurY + 2, 8, 0, 2 * Math.PI); ctx.fill();
+  ctx.fillStyle = farbe; ctx.font = "bold 15px -apple-system,Segoe UI,Arial";
+  ctx.fillText(kmh + " km/h", ax, spurY - 54);
+
+  // Anzeige
+  el("vval").textContent = kmh + " km/h  (" + fmt(v) + " m/s)";
+  el("trval").textContent = fmt(tr) + " s";
+  el("aval").textContent = fmt(a) + " m/s²";
+  el("dval").textContent = d + " m";
+  el("rw").textContent = fmt(rw) + " m";
+  el("bw").textContent = fmt(bw) + " m";
+  el("aw").textContent = fmt(aw) + " m";
+
+  const vd = el("verdict");
+  if (reicht) {
+    vd.className = "verdict ok";
+    vd.textContent = "Das Auto steht " + fmt(d - aw) + " m vor dem Hindernis.";
+  } else {
+    // Resttempo am Hindernis
+    const bremsstrecke = d - rw;
+    const vTreffer = bremsstrecke <= 0 ? v : Math.sqrt(Math.max(0, v * v - 2 * a * bremsstrecke));
+    vd.className = "verdict bad";
+    vd.textContent = bremsstrecke <= 0
+      ? "Der Fahrer hat noch gar nicht gebremst – Aufprall mit vollen " + fmt(v * 3.6, 0) + " km/h."
+      : "Aufprall mit " + fmt(vTreffer * 3.6, 0) + " km/h (" + fmt(aw - d) + " m zu spät).";
+  }
+}
+
+for (const id of ["v", "tr", "a", "d"]) el(id).addEventListener("input", zeichne);
+zeichne();
+</script>
+</body>
+</html>

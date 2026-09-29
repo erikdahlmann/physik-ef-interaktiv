@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Momentangeschwindigkeit – Von der Sekante zur Tangente</title>
+<style>
+:root{--ink:#1c2733;--muted:#5b6b7b;--accent:#1565c0;--bg:#eef2f6;--card:#fff;--line:#dbe3ea;--sek:#e65100;--tan:#2e7d32;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding:2rem 1rem 4rem}
+.wrap{max-width:960px;margin:0 auto}
+header.top{background:linear-gradient(135deg,#0d3b66,#1565c0);color:#fff;border-radius:14px;padding:1.4rem 1.8rem;margin-bottom:1.1rem}
+header.top .kicker{font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+header.top h1{font-size:1.55rem;margin-top:.2rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(28,39,51,.05)}
+.card h2{font-size:.95rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:.6rem}
+canvas{width:100%;height:auto;display:block;background:#fff;border-radius:8px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:1rem .5rem;align-items:center}
+.controls label{font-weight:600;font-size:.95rem}
+.controls input[type=range]{width:100%}
+.controls .val{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700}
+.readout{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.8rem}
+.chip{border-radius:10px;padding:.5rem .9rem;font-size:1.02rem;font-variant-numeric:tabular-nums;border:1px solid var(--line);background:#f8fafc}
+.chip b{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.chip.sek{border-color:var(--sek);color:var(--sek)}
+.chip.tan{border-color:var(--tan);color:var(--tan)}
+.check{margin-top:.8rem;font-size:.95rem}
+ol{padding-left:1.3rem}
+li{margin:.35rem 0}
+.btnrow{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.9rem}
+button.btn{font:inherit;font-weight:700;border:none;border-radius:9px;padding:.55rem 1.2rem;cursor:pointer;background:var(--accent);color:#fff}
+button.btn.sec{background:#e9eef4;color:var(--ink)}
+button.btn:hover{filter:brightness(1.08)}
+table.prot{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;margin-top:.7rem}
+table.prot th{text-align:right;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:2px solid var(--line);padding:.4rem .6rem}
+table.prot td{text-align:right;border-bottom:1px solid var(--line);padding:.45rem .6rem}
+table.prot tr:last-child td{border-bottom:none}
+table.prot .empty{text-align:center;color:var(--muted);font-style:italic}
+.trend{font-size:.95rem;color:var(--tan);font-weight:600;margin-top:.6rem;min-height:1.4em}
+footer{margin-top:1.2rem;color:var(--muted);font-size:.85rem;text-align:center}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<header class="top">
+  <div class="kicker">Physik EF.1 · Kinematik · Stunde 6</div>
+  <h1>Momentangeschwindigkeit: Von der Sekante zur Tangente</h1>
+</header>
+
+<div class="card">
+  <p>Das t-s-Diagramm zeigt einen <strong>100-m-Sprint</strong>: Am Anfang wird der Läufer schneller, dann läuft er mit (fast) konstanter Geschwindigkeit.
+  Die <span style="color:var(--sek);font-weight:700">orange Sekante</span> verbindet zwei Punkte im Abstand <strong>Δt</strong> – ihre Steigung ist die <strong>Durchschnittsgeschwindigkeit</strong> v̄ in diesem Intervall.
+  Was passiert, wenn du Δt immer kleiner machst?</p>
+</div>
+
+<div class="card">
+  <canvas id="cv" width="900" height="480"></canvas>
+  <div class="controls" style="margin-top:1rem">
+    <label>Zeitpunkt t₀ = <span class="val" id="t0val"></span></label>
+    <input type="range" id="t0" min="0.3" max="8" step="0.1" value="2">
+    <label>Intervallbreite Δt = <span class="val" id="dtval"></span></label>
+    <input type="range" id="dt" min="0.05" max="4" step="0.05" value="3">
+  </div>
+  <label class="check"><input type="checkbox" id="showtan"> <span style="color:var(--tan);font-weight:700">Tangente</span> bei t₀ anzeigen (Kontrolle – erst nach Aufgabe 2 einschalten!)</label>
+  <div class="readout">
+    <div class="chip"><b>Δs</b><span id="ds"></span></div>
+    <div class="chip"><b>Δt</b><span id="dtc"></span></div>
+    <div class="chip sek"><b>v̄ = Δs/Δt (Sekante)</b><span id="vbar"></span></div>
+    <div class="chip tan" id="vtanchip" style="display:none"><b>v(t₀) (Tangente)</b><span id="vtan"></span></div>
+  </div>
+  <div class="btnrow">
+    <button class="btn" id="take">＋ Wert ins Protokoll</button>
+    <button class="btn sec" id="clear">Protokoll leeren</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Mein Messprotokoll</h2>
+  <table class="prot" id="prot">
+    <thead><tr><th>t₀ in s</th><th>Δt in s</th><th>Δs in m</th><th>v̄ = Δs/Δt in m/s</th></tr></thead>
+    <tbody><tr><td class="empty" colspan="4">Noch keine Werte – stelle Δt ein und klicke „＋ Wert ins Protokoll“.</td></tr></tbody>
+  </table>
+  <div class="trend" id="trend"></div>
+</div>
+
+<div class="card">
+  <h2>Aufgaben</h2>
+  <ol>
+    <li>Stelle <strong>t₀ = 2,0 s</strong> ein. Protokolliere v̄ für Δt = 3 s; 2 s; 1 s; 0,5 s; 0,1 s in einer Tabelle. Was beobachtest du?</li>
+    <li>Gegen welchen Wert scheint v̄ zu streben? Notiere deine Vermutung für die <strong>Momentangeschwindigkeit</strong> v(2 s) – prüfe erst danach mit der Tangente.</li>
+    <li>Wiederhole die Untersuchung bei t₀ = 6 s. Warum sind Sekante und Tangente hier kaum zu unterscheiden?</li>
+    <li>Blitzer und Section Control (Streckenradar) messen beide „die Geschwindigkeit“. Ordne zu: Wer misst eher v̄, wer eher v? Begründe mit dem Diagramm.</li>
+  </ol>
+</div>
+
+<footer>Physik EF.1 · interaktives Arbeitsmaterial · offline lauffähig</footer>
+</div>
+<script>
+"use strict";
+// Sprintmodell: s(t) = vmax*(t - tau*(1 - e^(-t/tau)))
+const VMAX = 8, TAU = 1.5, TMAX = 10, SMAX = 70;
+const s = t => VMAX * (t - TAU * (1 - Math.exp(-t / TAU)));
+const v = t => VMAX * (1 - Math.exp(-t / TAU));
+
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const PAD = {l: 62, r: 16, t: 16, b: 46};
+const W = cv.width, H = cv.height;
+const X = t => PAD.l + (t / TMAX) * (W - PAD.l - PAD.r);
+const Y = si => H - PAD.b - (si / SMAX) * (H - PAD.t - PAD.b);
+
+const fmt = (x, d=2) => x.toLocaleString("de-DE", {minimumFractionDigits: d, maximumFractionDigits: d});
+
+function axes() {
+  ctx.strokeStyle = "#dbe3ea"; ctx.fillStyle = "#5b6b7b";
+  ctx.lineWidth = 1; ctx.font = "13px sans-serif";
+  ctx.textAlign = "center";
+  for (let t = 0; t <= TMAX; t++) {
+    ctx.beginPath(); ctx.moveTo(X(t), Y(0)); ctx.lineTo(X(t), Y(SMAX)); ctx.stroke();
+    ctx.fillText(t, X(t), H - PAD.b + 18);
+  }
+  ctx.textAlign = "right";
+  for (let si = 0; si <= SMAX; si += 10) {
+    ctx.beginPath(); ctx.moveTo(X(0), Y(si)); ctx.lineTo(X(TMAX), Y(si)); ctx.stroke();
+    ctx.fillText(si, PAD.l - 8, Y(si) + 4);
+  }
+  ctx.strokeStyle = "#1c2733"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(X(0), Y(SMAX)); ctx.lineTo(X(0), Y(0)); ctx.lineTo(X(TMAX), Y(0)); ctx.stroke();
+  ctx.textAlign = "center"; ctx.fillStyle = "#1c2733"; ctx.font = "bold 14px sans-serif";
+  ctx.fillText("t in s", W - 40, H - 10);
+  ctx.save(); ctx.translate(16, 60); ctx.rotate(-Math.PI/2); ctx.fillText("s in m", 0, 0); ctx.restore();
+}
+
+function line(t1, s1, t2, s2, color, width, dash) {
+  // verlängert die Gerade über die beiden Punkte hinaus
+  const m = (s2 - s1) / (t2 - t1);
+  const ta = 0, tb = TMAX;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath();
+  let started = false;
+  for (const t of [ta, tb]) {
+    const si = s1 + m * (t - t1);
+    const yy = Math.min(Math.max(si, -5), SMAX + 5);
+    const tt = t1 + (yy - s1) / m; // ggf. am Rand kappen
+    const px = X(m === 0 ? t : tt), py = Y(yy);
+    if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke(); ctx.restore();
+}
+
+function dot(t, si, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(X(t), Y(si), 6, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function draw() {
+  const t0 = +document.getElementById("t0").value;
+  const dt = +document.getElementById("dt").value;
+  const t1 = Math.min(t0 + dt, TMAX);
+  const showTan = document.getElementById("showtan").checked;
+
+  ctx.clearRect(0, 0, W, H);
+  axes();
+
+  // Kurve
+  ctx.strokeStyle = "#1565c0"; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let t = 0; t <= TMAX; t += 0.02) {
+    const px = X(t), py = Y(s(t));
+    t === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Sekante + Punkte
+  line(t0, s(t0), t1, s(t1), "#e65100", 2.5);
+  // Tangente
+  if (showTan) {
+    const m = v(t0);
+    line(t0, s(t0), t0 + 1, s(t0) + m, "#2e7d32", 2.5, [7, 5]);
+  }
+  dot(t0, s(t0), "#e65100");
+  dot(t1, s(t1), "#e65100");
+
+  // Readout
+  const ds = s(t1) - s(t0), realDt = t1 - t0;
+  document.getElementById("t0val").textContent = fmt(t0, 1) + " s";
+  document.getElementById("dtval").textContent = fmt(dt, 2) + " s";
+  document.getElementById("ds").textContent = fmt(ds) + " m";
+  document.getElementById("dtc").textContent = fmt(realDt) + " s";
+  document.getElementById("vbar").textContent = fmt(ds / realDt) + " m/s";
+  document.getElementById("vtanchip").style.display = showTan ? "" : "none";
+  document.getElementById("vtan").textContent = fmt(v(t0)) + " m/s";
+}
+
+for (const id of ["t0", "dt", "showtan"]) {
+  document.getElementById(id).addEventListener("input", draw);
+}
+
+// ---- Protokoll ----
+const prot = [];
+const tbody = document.querySelector("#prot tbody");
+
+function renderProt() {
+  if (prot.length === 0) {
+    tbody.innerHTML = '<tr><td class="empty" colspan="4">Noch keine Werte – stelle Δt ein und klicke „＋ Wert ins Protokoll“.</td></tr>';
+    document.getElementById("trend").textContent = "";
+    return;
+  }
+  // nach fallendem Delta t sortieren: so wird die Annäherung sichtbar
+  const sorted = [...prot].sort((a, b) => b.dt - a.dt);
+  tbody.innerHTML = sorted.map(r =>
+    `<tr><td>${fmt(r.t0, 1)}</td><td>${fmt(r.dt)}</td><td>${fmt(r.ds)}</td><td><b>${fmt(r.v)}</b></td></tr>`
+  ).join("");
+  // Hinweis, sobald mehrere Werte bei gleichem t0 vorliegen
+  const groups = {};
+  for (const r of prot) (groups[r.t0.toFixed(1)] ||= []).push(r);
+  const best = Object.entries(groups).sort((a, b) => b[1].length - a[1].length)[0];
+  document.getElementById("trend").textContent =
+    best && best[1].length >= 3
+      ? `Bei t₀ = ${best[0].replace(".", ",")} s nähert sich v̄ mit kleiner werdendem Δt dem Wert ${fmt(v(+best[0]))} m/s an.`
+      : "";
+}
+
+document.getElementById("take").addEventListener("click", () => {
+  const t0 = +document.getElementById("t0").value;
+  const dt = +document.getElementById("dt").value;
+  const t1 = Math.min(t0 + dt, TMAX);
+  const ds = s(t1) - s(t0), realDt = t1 - t0;
+  prot.push({ t0, dt: realDt, ds, v: ds / realDt });
+  renderProt();
+});
+document.getElementById("clear").addEventListener("click", () => {
+  prot.length = 0;
+  renderProt();
+});
+
+draw();
+</script>
+</body>
+</html>

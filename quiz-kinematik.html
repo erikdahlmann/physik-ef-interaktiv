@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selbsttest Kinematik – Klausurvorbereitung</title>
+<style>
+:root{--ink:#1c2733;--muted:#5b6b7b;--accent:#1565c0;--bg:#eef2f6;--card:#fff;--line:#dbe3ea;--ok:#2e7d32;--bad:#c62828;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding:2rem 1rem 4rem}
+.wrap{max-width:760px;margin:0 auto}
+header.top{background:linear-gradient(135deg,#0d3b66,#1565c0);color:#fff;border-radius:14px;padding:1.4rem 1.8rem;margin-bottom:1.1rem}
+header.top .kicker{font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+header.top h1{font-size:1.55rem;margin-top:.2rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(28,39,51,.05)}
+.progress{height:8px;background:#dde5ec;border-radius:99px;overflow:hidden;margin-bottom:1rem}
+.progress div{height:100%;background:var(--accent);width:0;transition:width .3s}
+.qmeta{font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.4rem;display:flex;justify-content:space-between}
+.qmeta .cat{color:var(--accent);font-weight:700}
+.qtext{font-size:1.12rem;font-weight:600;margin-bottom:1rem}
+.qfig{margin:.4rem 0 1rem;text-align:center}
+.opts{display:grid;gap:.6rem}
+button.opt{font:inherit;text-align:left;background:#f8fafc;border:2px solid var(--line);border-radius:10px;padding:.7rem 1rem;cursor:pointer;font-size:1.02rem}
+button.opt:hover:not(:disabled){border-color:var(--accent)}
+button.opt:disabled{cursor:default}
+button.opt.right{border-color:var(--ok);background:#e9f5ea;font-weight:700}
+button.opt.wrong{border-color:var(--bad);background:#fbeaea}
+.feedback{margin-top:1rem;border-radius:10px;padding:.8rem 1rem;display:none}
+.feedback.ok{display:block;background:#e9f5ea;border:1px solid #b7dcb9}
+.feedback.bad{display:block;background:#fbeaea;border:1px solid #eec3c3}
+.feedback b{display:block;margin-bottom:.2rem}
+.next{margin-top:1rem;text-align:right}
+button.btn{font:inherit;font-weight:700;border:none;border-radius:9px;padding:.55rem 1.4rem;cursor:pointer;background:var(--accent);color:#fff;display:none}
+button.btn:hover{filter:brightness(1.08)}
+.score{font-size:2.4rem;font-weight:800;color:var(--accent)}
+table{width:100%;border-collapse:collapse;margin-top:.8rem}
+td,th{border-bottom:1px solid var(--line);padding:.5rem .4rem;text-align:left}
+.bar{background:#dde5ec;border-radius:99px;height:10px;min-width:120px;overflow:hidden}
+.bar div{height:100%;border-radius:99px}
+.empf{background:#fff8e6;border:1px solid #f0d98c;border-radius:10px;padding:.8rem 1rem;margin-top:1rem}
+footer{margin-top:1.2rem;color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+</head>
+<body><div class="wrap">
+<header class="top">
+  <div class="kicker">Physik EF.1 · Stunde 16 · Vorbereitung Klausur 1</div>
+  <h1>Selbsttest Kinematik</h1>
+</header>
+
+<div class="card" id="quizcard">
+  <div class="progress"><div id="pbar"></div></div>
+  <div class="qmeta"><span class="cat" id="qcat"></span><span id="qnum"></span></div>
+  <div class="qtext" id="qtext"></div>
+  <div class="qfig" id="qfig"></div>
+  <div class="opts" id="opts"></div>
+  <div class="feedback" id="fb"></div>
+  <div class="next"><button class="btn" id="nextbtn">Weiter →</button></div>
+</div>
+
+<div class="card" id="resultcard" style="display:none">
+  <div class="qmeta"><span class="cat">Auswertung</span></div>
+  <p>Dein Ergebnis:</p>
+  <p class="score" id="scoreline"></p>
+  <table id="cattable"><thead><tr><th>Bereich</th><th>richtig</th><th></th></tr></thead><tbody></tbody></table>
+  <div class="empf" id="empf"></div>
+  <div class="next">
+    <button class="btn" id="wrongbtn" style="display:none;background:#e65100;margin-right:.5rem">↻ Nur falsche wiederholen</button>
+    <button class="btn" id="againbtn" style="display:inline-block">↺ Nochmal (neue Reihenfolge)</button>
+  </div>
+</div>
+
+<footer>Physik EF.1 · Selbsttest ohne Note – ehrlich antworten hilft dir mehr als raten</footer>
+</div>
+<script>
+"use strict";
+// SVG-Miniaturen für Diagrammfragen
+const svgAxes = (curve, ylab) => `
+<svg width="260" height="170" viewBox="0 0 260 170" style="background:#fff;border:1px solid #dbe3ea;border-radius:8px">
+  <line x1="35" y1="140" x2="245" y2="140" stroke="#1c2733" stroke-width="1.5"/>
+  <line x1="35" y1="140" x2="35" y2="15" stroke="#1c2733" stroke-width="1.5"/>
+  <text x="238" y="158" font-size="12" fill="#1c2733">t</text>
+  <text x="12" y="25" font-size="12" fill="#1c2733">${ylab}</text>
+  ${curve}
+</svg>`;
+
+const FIG_KONSTANT = svgAxes('<line x1="35" y1="60" x2="245" y2="60" stroke="#1565c0" stroke-width="3"/>', "v");
+const FIG_PARABEL  = svgAxes('<path d="M 35 140 Q 140 135 245 30" fill="none" stroke="#1565c0" stroke-width="3"/>', "s");
+const FIG_TV_FALL  = svgAxes('<line x1="35" y1="130" x2="245" y2="35" stroke="#1565c0" stroke-width="3"/>', "v");
+
+const QUESTIONS = [
+  {cat:"Begriffe & Konzepte", q:"Die Steigung im t-s-Diagramm entspricht …", opts:["… der Beschleunigung.","… der Geschwindigkeit.","… der zurückgelegten Strecke.","… der Zeit."], a:1,
+   ex:"Steigung = Δs/Δt = Geschwindigkeit. (Merke: Steigung im t-v-Diagramm wäre die Beschleunigung.)"},
+  {cat:"Begriffe & Konzepte", q:"Die Fläche unter dem Graphen im t-v-Diagramm entspricht …", opts:["… der Beschleunigung.","… der Durchschnittsgeschwindigkeit.","… der zurückgelegten Strecke.","… der Endgeschwindigkeit."], a:2,
+   ex:"Fläche = v·t (Rechteck) bzw. ½·t·(a·t) (Dreieck) – das ist genau die Strecke s."},
+  {cat:"Begriffe & Konzepte", q:"Ein fest installierter Blitzer misst …", opts:["… die Durchschnittsgeschwindigkeit auf dem Streckenabschnitt.","… näherungsweise die Momentangeschwindigkeit.","… die Beschleunigung.","… den Anhalteweg."], a:1,
+   ex:"Der Blitzer misst über ein sehr kurzes Zeitintervall – also näherungsweise die Momentangeschwindigkeit. Section Control misst v̄ über einen längeren Abschnitt."},
+  {cat:"Begriffe & Konzepte", q:"Ein Fahrgast im gleichförmig fahrenden Zug lässt einen Ball los. Wie fällt der Ball aus seiner Sicht?", opts:["Schräg nach hinten.","Schräg nach vorne.","Senkrecht nach unten.","Gar nicht – er schwebt."], a:2,
+   ex:"Im Bezugssystem des Zuges hat der Ball keine horizontale Relativgeschwindigkeit – er fällt senkrecht. Vom Bahnsteig aus gesehen beschreibt er eine Wurfparabel."},
+  {cat:"Rechnen", q:"Ein Auto fährt 100 m in 8,0 s mit konstanter Geschwindigkeit. Wie groß ist v?", opts:["8,0 m/s","10,5 m/s","12,5 m/s","80 m/s"], a:2,
+   ex:"v = s/t = 100 m / 8,0 s = 12,5 m/s (= 45 km/h)."},
+  {cat:"Rechnen", q:"Freier Fall aus der Ruhe: Wie schnell ist ein Körper nach 2,0 s? (g ≈ 9,81 m/s²)", opts:["≈ 4,9 m/s","≈ 9,8 m/s","≈ 19,6 m/s","≈ 39,2 m/s"], a:2,
+   ex:"v = g·t = 9,81 m/s² · 2,0 s ≈ 19,6 m/s."},
+  {cat:"Rechnen", q:"Freier Fall aus der Ruhe: Welche Höhe durchfällt ein Körper in 1,5 s?", opts:["≈ 7,4 m","≈ 11,0 m","≈ 14,7 m","≈ 22,1 m"], a:1,
+   ex:"h = ½·g·t² = 0,5 · 9,81 · (1,5)² ≈ 11,0 m."},
+  {cat:"Rechnen", q:"Gleichmäßig beschleunigte Bewegung aus der Ruhe: In der doppelten Zeit legt der Körper … zurück.", opts:["die doppelte Strecke","die dreifache Strecke","die vierfache Strecke","die halbe Strecke"], a:2,
+   ex:"s = ½at² – quadratischer Zusammenhang: doppelte Zeit → 2² = 4-fache Strecke."},
+  {cat:"Rechnen", q:"Bei doppelter Geschwindigkeit wird der Reaktionsweg … und der Bremsweg …", opts:["doppelt so lang / doppelt so lang","doppelt so lang / viermal so lang","viermal so lang / doppelt so lang","viermal so lang / viermal so lang"], a:1,
+   ex:"Reaktionsweg: gleichförmig, s ~ v → doppelt. Bremsweg: v² = 2as → s ~ v² → vierfach."},
+  {cat:"Diagramme", q:"Dieses t-v-Diagramm zeigt …", fig:FIG_KONSTANT, opts:["… eine gleichförmige Bewegung.","… eine gleichmäßig beschleunigte Bewegung.","… einen ruhenden Körper.","… eine Bewegung mit wachsender Beschleunigung."], a:0,
+   ex:"v ist konstant (waagerechte Linie) → gleichförmige Bewegung. Ein ruhender Körper hätte v = 0, also eine Linie auf der t-Achse."},
+  {cat:"Diagramme", q:"Der t-s-Graph ist eine Parabel (beginnend flach, immer steiler). Die Bewegung ist …", fig:FIG_PARABEL, opts:["… gleichförmig.","… gleichmäßig beschleunigt aus der Ruhe.","… abgebremst.","… rückwärts gerichtet."], a:1,
+   ex:"s ~ t² ergibt eine Parabel; die wachsende Steigung bedeutet wachsende Geschwindigkeit – gleichmäßig beschleunigt."},
+  {cat:"Diagramme", q:"Dieses t-v-Diagramm (Gerade durch den Ursprung, steigend) passt zu …", fig:FIG_TV_FALL, opts:["… einem Fallschirmspringer kurz vor der Landung.","… dem freien Fall aus der Ruhe.","… einer gleichförmigen Bewegung.","… einem bremsenden Auto."], a:1,
+   ex:"v = g·t: Gerade durch den Ursprung mit Steigung g – der freie Fall aus der Ruhe."},
+  {cat:"Messen & Auswerten", q:"Fünf Messungen einer Fallzeit: 0,64 s · 0,66 s · 0,63 s · 0,67 s · 0,65 s. Sinnvolle Ergebnisangabe?", opts:["t = 0,65 s","t = 0,650000 s","t = 0,7 s","t = 0,6431 s"], a:0,
+   ex:"Mittelwert 0,65 s; die Streuung (±0,02 s) erlaubt 2 signifikante Nachkommastellen – mehr Stellen täuschen Genauigkeit vor."},
+  {cat:"Messen & Auswerten", q:"Du vermutest s ~ t². Wie prüfst du das am besten mit einem Diagramm?", opts:["s über t auftragen und auf Krümmung schauen.","s über t² auftragen – Gerade durch den Ursprung bestätigt die Vermutung.","t über s auftragen.","Alle Messwerte mitteln."], a:1,
+   ex:"Linearisierung: Trägt man s über t² auf, wird aus s = ½at² eine Ursprungsgerade mit Steigung ½a – Abweichungen sind sofort sichtbar."},
+  {cat:"Messen & Auswerten", q:"Beim Fallexperiment lässt eine Gruppe die Kugel immer erst kurz NACH dem Startgeräusch los. Welche Folge hat dieser Fehler?", opts:["Die gemessene Fallzeit ist zu groß, der berechnete g-Wert zu klein.","Die gemessene Fallzeit ist zu groß, der berechnete g-Wert zu groß.","Die gemessene Fallzeit ist zu klein, der g-Wert zu groß.","Der Fehler mittelt sich bei genügend Messungen heraus."], a:0,
+   ex:"Die Uhr läuft schon, bevor die Kugel fällt → gemessene Zeit zu groß. Wegen g = 2h/t² wird der g-Wert dadurch zu klein. Das ist ein systematischer Fehler: Er wirkt bei jeder Messung in dieselbe Richtung und mittelt sich deshalb nicht heraus."},
+  {cat:"Rechnen", q:"Ein Zug fährt mit 72 km/h. Wie viel ist das in m/s?", opts:["7,2 m/s","20 m/s","25,9 m/s","259 m/s"], a:1,
+   ex:"72 km/h : 3,6 = 20 m/s. (Merke: von km/h nach m/s wird durch 3,6 geteilt.)"},
+  {cat:"Diagramme", q:"Im t-v-Diagramm liegt der Graph eine Zeit lang UNTERHALB der t-Achse. Was bedeutet das?", opts:["Der Körper steht still.","Der Körper bewegt sich rückwärts (entgegen der gewählten Richtung).","Der Körper wird langsamer.","Das ist physikalisch unmöglich."], a:1,
+   ex:"Ein negativer v-Wert bedeutet eine Bewegung entgegen der positiven Richtung. Langsamer wird der Körper dagegen, wenn der Betrag von v abnimmt – das kann auch oberhalb der Achse passieren."},
+  {cat:"Begriffe & Konzepte", q:"Warum fallen im Vakuum eine Feder und ein Hammer gleich schnell?", opts:["Weil im Vakuum keine Schwerkraft wirkt.","Weil in h = ½gt² die Masse nicht vorkommt und kein Luftwiderstand bremst.","Weil beide dieselbe Dichte haben.","Weil die Feder im Vakuum schwerer wird."], a:1,
+   ex:"Die Fallgesetze enthalten die Masse nicht. Auf der Erde bremst nur der Luftwiderstand die Feder – im Vakuum (Apollo-15-Experiment auf dem Mond) fallen beide gleich."},
+];
+
+let order = [], idx = 0, score = 0, locked = false, wrongIdx = [];
+const cats = {};
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function start(subset) {
+  order = shuffle(subset && subset.length ? [...subset] : QUESTIONS.map((_, i) => i));
+  idx = 0; score = 0; wrongIdx = [];
+  for (const k of Object.keys(cats)) delete cats[k];
+  for (const i of order) cats[QUESTIONS[i].cat] = {right: 0, total: 0};
+  document.getElementById("resultcard").style.display = "none";
+  document.getElementById("quizcard").style.display = "";
+  show();
+}
+
+function show() {
+  const q = QUESTIONS[order[idx]];
+  locked = false;
+  document.getElementById("pbar").style.width = (idx / order.length * 100) + "%";
+  document.getElementById("qcat").textContent = q.cat;
+  document.getElementById("qnum").textContent = `Frage ${idx + 1} / ${order.length}`;
+  document.getElementById("qtext").textContent = q.q;
+  document.getElementById("qfig").innerHTML = q.fig || "";
+  const fb = document.getElementById("fb");
+  fb.className = "feedback"; fb.innerHTML = "";
+  document.getElementById("nextbtn").style.display = "none";
+  const box = document.getElementById("opts");
+  box.innerHTML = "";
+  q.opts.forEach((text, i) => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = text;
+    b.addEventListener("click", () => answer(i, b));
+    box.appendChild(b);
+  });
+}
+
+function answer(i, btn) {
+  if (locked) return;
+  locked = true;
+  const q = QUESTIONS[order[idx]];
+  const buttons = document.querySelectorAll("#opts .opt");
+  buttons.forEach(b => b.disabled = true);
+  buttons[q.a].classList.add("right");
+  cats[q.cat].total++;
+  const fb = document.getElementById("fb");
+  if (i === q.a) {
+    score++; cats[q.cat].right++;
+    fb.className = "feedback ok";
+    fb.innerHTML = "<b>✔ Richtig!</b>" + q.ex;
+  } else {
+    btn.classList.add("wrong");
+    wrongIdx.push(order[idx]);
+    fb.className = "feedback bad";
+    fb.innerHTML = "<b>✘ Leider nicht.</b>" + q.ex;
+  }
+  document.getElementById("nextbtn").style.display = "inline-block";
+  document.getElementById("nextbtn").textContent = idx === order.length - 1 ? "Zur Auswertung →" : "Weiter →";
+}
+
+function finish() {
+  document.getElementById("quizcard").style.display = "none";
+  document.getElementById("resultcard").style.display = "";
+  document.getElementById("scoreline").textContent = `${score} / ${order.length}`;
+  const wb = document.getElementById("wrongbtn");
+  wb.style.display = wrongIdx.length ? "inline-block" : "none";
+  wb.textContent = `↻ Nur die ${wrongIdx.length} falschen wiederholen`;
+  const retry = [...wrongIdx];
+  wb.onclick = () => start(retry);
+  const tb = document.querySelector("#cattable tbody");
+  tb.innerHTML = "";
+  let weakest = null;
+  for (const [cat, c] of Object.entries(cats)) {
+    const frac = c.total ? c.right / c.total : 0;
+    if (weakest === null || frac < weakest.frac) weakest = {cat, frac};
+    const color = frac >= 0.75 ? "#2e7d32" : frac >= 0.5 ? "#e65100" : "#c62828";
+    tb.insertAdjacentHTML("beforeend",
+      `<tr><td>${cat}</td><td>${c.right} / ${c.total}</td>
+       <td><div class="bar"><div style="width:${Math.round(frac*100)}%;background:${color}"></div></div></td></tr>`);
+  }
+  const POOL = {
+    "Rechnen": "Pool A (Größen berechnen)",
+    "Diagramme": "Pool B (Diagramme übersetzen)",
+    "Begriffe & Konzepte": "Pool C (Kontext- und Konzeptaufgaben)",
+    "Messen & Auswerten": "Pool C (Kontext- und Konzeptaufgaben) + Methodenblatt AB3",
+  };
+  document.getElementById("empf").innerHTML =
+    score === order.length
+    ? "<b>Alles richtig.</b> Nimm dir in der Übungsphase die anspruchsvollste Aufgabe aus Pool C vor."
+    : `<b>Empfehlung für die Übungsphase:</b> Dein schwächster Bereich ist <b>${weakest.cat}</b> – starte mit <b>${POOL[weakest.cat]}</b>.`;
+}
+
+document.getElementById("nextbtn").addEventListener("click", () => {
+  idx++;
+  idx < order.length ? show() : finish();
+});
+document.getElementById("againbtn").addEventListener("click", () => start());
+start();
+</script>
+</body>
+</html>

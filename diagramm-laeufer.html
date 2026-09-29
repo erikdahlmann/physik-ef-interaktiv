@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagramm-Läufer – t-s, t-v und t-a im Zusammenspiel</title>
+<style>
+:root{--ink:#1c2733;--muted:#5b6b7b;--accent:#1565c0;--bg:#eef2f6;--card:#fff;--line:#dbe3ea;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding:2rem 1rem 4rem}
+.wrap{max-width:1000px;margin:0 auto}
+header.top{background:linear-gradient(135deg,#0d3b66,#1565c0);color:#fff;border-radius:14px;padding:1.4rem 1.8rem;margin-bottom:1.1rem}
+header.top .kicker{font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+header.top h1{font-size:1.55rem;margin-top:.2rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(28,39,51,.05)}
+.card h2{font-size:.95rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:.6rem}
+canvas{width:100%;height:auto;display:block;background:#fff;border-radius:8px}
+video{width:100%;height:auto;display:block;border-radius:10px;background:#fbfaf7}
+.vhint{margin-top:.7rem;font-size:.95rem;color:var(--muted)}
+.plots{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:.6rem 1.4rem;align-items:center;margin-top:.4rem}
+.controls label{font-weight:600;font-size:.95rem}
+.controls input[type=range]{width:100%}
+.val{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700}
+.buttons{display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-weight:700;border:none;border-radius:9px;padding:.55rem 1.3rem;cursor:pointer;background:var(--accent);color:#fff}
+button.sec{background:#e9eef4;color:var(--ink)}
+button:hover{filter:brightness(1.08)}
+.chip{border-radius:10px;padding:.35rem .8rem;font-size:1rem;font-variant-numeric:tabular-nums;border:1px solid var(--line);background:#f8fafc}
+.chip b{color:var(--muted);font-weight:700;font-size:.8rem;margin-right:.3rem}
+ol{padding-left:1.3rem}
+li{margin:.35rem 0}
+.formeln{font-size:1.05rem;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:.6rem 1rem;display:inline-block}
+.check{margin-top:.9rem;display:block;font-size:.95rem}
+.areabox{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.7rem}
+.areabox .chip b{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.15rem}
+.areabox .chip.ok{border-color:#2e7d32;background:#e9f5ea;color:#2e7d32}
+footer{margin-top:1.2rem;color:var(--muted);font-size:.85rem;text-align:center}
+@media(max-width:760px){.plots{grid-template-columns:1fr}.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<header class="top">
+  <div class="kicker">Physik EF.1 · Kinematik · Stunde 10</div>
+  <h1>Diagramm-Läufer: t-s, t-v und t-a im Zusammenspiel</h1>
+</header>
+
+<div class="card">
+  <h2>Zuerst ansehen: Woher kommt die Fläche?</h2>
+  <video controls preload="metadata" poster="video/flaeche-tv-still.jpg">
+    <source src="video/flaeche-tv.mp4" type="video/mp4">
+    Dein Browser kann dieses Video nicht abspielen. Die Datei liegt unter <code>video/flaeche-tv.mp4</code>.
+  </video>
+  <p class="vhint">Oben fährt der Körper, unten wächst die Fläche unter dem t-v-Graphen mit.
+  Beide Zahlen stimmen zu jedem Zeitpunkt überein: Die Fläche <em>ist</em> die zurückgelegte Strecke.</p>
+</div>
+
+<div class="card">
+  <p>Der Punkt bewegt sich mit konstanter Beschleunigung entlang der Strecke.
+  Stelle Startgeschwindigkeit <strong>v₀</strong> und Beschleunigung <strong>a</strong> ein und beobachte, wie die drei Diagramme <strong>gleichzeitig</strong> entstehen.</p>
+  <p style="margin-top:.5rem"><span class="formeln">s(t) = v₀·t + ½·a·t² &nbsp;&nbsp;·&nbsp;&nbsp; v(t) = v₀ + a·t &nbsp;&nbsp;·&nbsp;&nbsp; a = konst.</span></p>
+</div>
+
+<div class="card">
+  <canvas id="track" width="960" height="90"></canvas>
+  <div class="controls">
+    <label>Startgeschwindigkeit v₀ = <span class="val" id="v0val"></span></label>
+    <input type="range" id="v0" min="-10" max="10" step="0.5" value="0">
+    <label>Beschleunigung a = <span class="val" id="aval"></span></label>
+    <input type="range" id="a" min="-3" max="3" step="0.1" value="1">
+  </div>
+  <div class="buttons">
+    <button id="play">▶ Start</button>
+    <button id="reset" class="sec">↺ Zurücksetzen</button>
+    <span class="chip"><b>t</b><span id="tOut">0,0 s</span></span>
+    <span class="chip"><b>s</b><span id="sOut">0,0 m</span></span>
+    <span class="chip"><b>v</b><span id="vOut">0,0 m/s</span></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="plots">
+    <canvas id="ps" width="320" height="260"></canvas>
+    <canvas id="pv" width="320" height="260"></canvas>
+    <canvas id="pa" width="320" height="260"></canvas>
+  </div>
+  <label class="check"><input type="checkbox" id="showarea" checked> Fläche unter dem t-v-Graphen einfärben</label>
+  <div id="areabox" class="areabox">
+    <div class="chip"><b style="color:#1565c0">■ Rechteck</b> v₀·t = <span id="aRect"></span></div>
+    <div class="chip"><b style="color:#e65100">■ Dreieck</b> ½·a·t² = <span id="aTri"></span></div>
+    <div class="chip"><b>Summe der Flächen</b> <span id="aSum"></span></div>
+    <div class="chip ok"><b>abgelesen im t-s-Diagramm</b> s = <span id="aS"></span></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Aufgaben</h2>
+  <ol>
+    <li>Stelle v₀ = 0 und a = 1 m/s² ein. Beschreibe die Form aller drei Graphen. Warum ist der t-s-Graph gekrümmt, der t-v-Graph aber gerade?</li>
+    <li>Schalte die Flächenfärbung ein und halte bei t = 6 s an. Berechne die Dreiecksfläche ½·a·t² selbst und vergleiche mit der Anzeige <em>und</em> mit dem s-Wert im t-s-Diagramm. Was stellst du fest?</li>
+    <li>Stelle nun v₀ = 5 m/s und a = 1 m/s² ein. Erkläre, warum die Fläche jetzt aus einem <span style="color:#1565c0;font-weight:700">Rechteck</span> und einem <span style="color:#e65100;font-weight:700">Dreieck</span> besteht – und wo sich diese beiden Teile in der Formel s = v₀·t + ½·a·t² wiederfinden.</li>
+    <li>Stelle v₀ = 8 m/s und a = −1,5 m/s² ein (Bremsen!). Was passiert im Umkehrpunkt in allen drei Diagrammen? Wie verhält sich dort die eingefärbte Fläche – und warum wird s wieder kleiner?</li>
+    <li>Finde Einstellungen, bei denen der Läufer nach 10 s wieder am Start steht. Begründe mit der Bewegungsgleichung.</li>
+  </ol>
+</div>
+
+<footer>Physik EF.1 · interaktives Arbeitsmaterial · offline lauffähig</footer>
+</div>
+<script>
+"use strict";
+const TMAX = 10, SMIN = -60, SMAX = 140, VMIN = -25, VMAX = 25, AMIN = -3.5, AMAX = 3.5;
+let v0 = 0, a = 1, t = 0, playing = false, last = null;
+
+const fmt = (x, d=1) => x.toLocaleString("de-DE", {minimumFractionDigits: d, maximumFractionDigits: d});
+const sOf = t => v0 * t + 0.5 * a * t * t;
+const vOf = t => v0 + a * t;
+
+function plot(cv, ymin, ymax, ylab, f, color, tNow, ticks, showArea) {
+  const ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  const PAD = {l: 44, r: 10, t: 22, b: 30};
+  const X = tt => PAD.l + (tt / TMAX) * (W - PAD.l - PAD.r);
+  const Y = y => H - PAD.b - ((y - ymin) / (ymax - ymin)) * (H - PAD.t - PAD.b);
+  ctx.clearRect(0, 0, W, H);
+  // Flächen unter dem t-v-Graphen: Rechteck (v0-Anteil) + Dreieck (a-Anteil)
+  if (showArea && tNow > 0) {
+    ctx.fillStyle = "rgba(21,101,192,.20)";      // v0 * t
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(tNow), Y(0));
+    ctx.lineTo(X(tNow), Y(v0)); ctx.lineTo(X(0), Y(v0));
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(230,81,0,.28)";        // 1/2 * a * t^2
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(v0)); ctx.lineTo(X(tNow), Y(v0));
+    ctx.lineTo(X(tNow), Y(vOf(tNow)));
+    ctx.closePath(); ctx.fill();
+  }
+  // Raster
+  ctx.strokeStyle = "#e5ebf1"; ctx.lineWidth = 1; ctx.fillStyle = "#5b6b7b"; ctx.font = "11px sans-serif";
+  ctx.textAlign = "center";
+  for (let tt = 0; tt <= TMAX; tt += 2) {
+    ctx.beginPath(); ctx.moveTo(X(tt), Y(ymin)); ctx.lineTo(X(tt), Y(ymax)); ctx.stroke();
+    ctx.fillText(tt, X(tt), H - PAD.b + 14);
+  }
+  ctx.textAlign = "right";
+  for (const y of ticks) {
+    ctx.beginPath(); ctx.moveTo(X(0), Y(y)); ctx.lineTo(X(TMAX), Y(y)); ctx.stroke();
+    ctx.fillText(y, PAD.l - 5, Y(y) + 3.5);
+  }
+  // Nulllinie + Achsen
+  ctx.strokeStyle = "#9fb0c0"; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(TMAX), Y(0)); ctx.stroke();
+  ctx.strokeStyle = "#1c2733"; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(X(0), Y(ymax)); ctx.lineTo(X(0), Y(ymin)); ctx.stroke();
+  ctx.fillStyle = "#1c2733"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "left";
+  ctx.fillText(ylab, 6, 14);
+  ctx.textAlign = "right"; ctx.fillText("t in s", W - 8, H - 8);
+  // Restkurve blass
+  ctx.strokeStyle = color + "44"; ctx.lineWidth = 2; ctx.beginPath();
+  for (let tt = 0; tt <= TMAX; tt += 0.05) {
+    const px = X(tt), py = Y(f(tt));
+    tt === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  // Kurve bis tNow kräftig
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.beginPath();
+  for (let tt = 0; tt <= tNow + 1e-9; tt += 0.05) {
+    const px = X(Math.min(tt, tNow)), py = Y(f(Math.min(tt, tNow)));
+    tt === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  // Marker
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(X(tNow), Y(f(tNow)), 5.5, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function drawTrack() {
+  const cv = document.getElementById("track"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height, PAD = 50;
+  const X = si => PAD + ((si - SMIN) / (SMAX - SMIN)) * (W - 2 * PAD);
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = "#9fb0c0"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(X(SMIN), 55); ctx.lineTo(X(SMAX), 55); ctx.stroke();
+  ctx.fillStyle = "#5b6b7b"; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+  for (let si = -50; si <= 130; si += 25) {
+    ctx.strokeStyle = "#9fb0c0"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(X(si), 49); ctx.lineTo(X(si), 61); ctx.stroke();
+    ctx.fillText(si + " m", X(si), 80);
+  }
+  const si = Math.min(Math.max(sOf(t), SMIN), SMAX);
+  ctx.fillStyle = "#c62828";
+  ctx.beginPath(); ctx.arc(X(si), 55, 11, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.fillStyle = "#c62828"; ctx.font = "bold 13px sans-serif";
+  ctx.fillText("🏃 " + fmt(sOf(t)) + " m", X(si), 30);
+}
+
+function drawAll() {
+  document.getElementById("v0val").textContent = fmt(v0) + " m/s";
+  document.getElementById("aval").textContent = fmt(a) + " m/s²";
+  document.getElementById("tOut").textContent = fmt(t) + " s";
+  document.getElementById("sOut").textContent = fmt(sOf(t)) + " m";
+  document.getElementById("vOut").textContent = fmt(vOf(t)) + " m/s";
+  drawTrack();
+  const showArea = document.getElementById("showarea").checked;
+  plot(document.getElementById("ps"), SMIN, SMAX, "s in m", sOf, "#1565c0", t, [-50, 0, 50, 100]);
+  plot(document.getElementById("pv"), VMIN, VMAX, "v in m/s", vOf, "#e65100", t, [-20, -10, 0, 10, 20], showArea);
+  plot(document.getElementById("pa"), AMIN, AMAX, "a in m/s²", () => a, "#2e7d32", t, [-3, -2, -1, 0, 1, 2, 3]);
+  // Flächenbilanz
+  const aRect = v0 * t, aTri = 0.5 * a * t * t;
+  document.getElementById("areabox").style.display = showArea ? "" : "none";
+  document.getElementById("aRect").textContent = fmt(aRect) + " m";
+  document.getElementById("aTri").textContent = fmt(aTri) + " m";
+  document.getElementById("aSum").textContent = fmt(aRect + aTri) + " m";
+  document.getElementById("aS").textContent = fmt(sOf(t)) + " m";
+}
+
+function step(ts) {
+  if (!playing) return;
+  if (last === null) last = ts;
+  t = Math.min(t + (ts - last) / 1000, TMAX);
+  last = ts;
+  drawAll();
+  if (t >= TMAX) { playing = false; last = null; document.getElementById("play").textContent = "▶ Start"; return; }
+  requestAnimationFrame(step);
+}
+
+document.getElementById("play").addEventListener("click", () => {
+  if (playing) { playing = false; last = null; document.getElementById("play").textContent = "▶ Weiter"; }
+  else {
+    if (t >= TMAX) t = 0;
+    playing = true; last = null; document.getElementById("play").textContent = "⏸ Pause";
+    requestAnimationFrame(step);
+  }
+});
+document.getElementById("reset").addEventListener("click", () => {
+  playing = false; last = null; t = 0;
+  document.getElementById("play").textContent = "▶ Start";
+  drawAll();
+});
+for (const id of ["v0", "a"]) {
+  document.getElementById(id).addEventListener("input", () => {
+    v0 = +document.getElementById("v0").value;
+    a = +document.getElementById("a").value;
+    drawAll();
+  });
+}
+document.getElementById("showarea").addEventListener("input", drawAll);
+drawAll();
+</script>
+</body>
+</html>
